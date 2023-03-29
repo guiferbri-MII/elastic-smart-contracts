@@ -11,3 +11,6 @@ logs
 
 # Visual Studio Code
 .vscode
+
+#iOS
+.DS_Store
