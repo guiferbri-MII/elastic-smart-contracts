@@ -88,7 +88,7 @@ class analytics_chaincode extends Contract {
 
         let parameters = JSON.parse(params.toString())
         let s = await this.queryData(ctx, parseInt(parameters.dataNumber));
-        let data = JSON.parse(s.toString())[0];
+        let data = s[0];
         let det = JSON.parse(parameters.data);
         let time = Date.now();
         data.Record.responses = data.Record.responses.filter((i) => {
@@ -152,14 +152,14 @@ class analytics_chaincode extends Contract {
 
             for(let j=1; j<=numData; j++){
                 let dataResponse = await this.queryData(ctx, j);
-                data.push(JSON.parse(dataResponse.toString())[0]);
+                data.push(dataResponse[0]);
             }
-    
+
             for(let k=0; k<frmDates.length; k++){
                 let fromDate = frmDates[k];
                 let toDate = fromDate - (1000* parameters.timeData);
 
-                var agreement = data[0].Record.responses[0].agreement
+                var agreement = data[0].Record.responses[0].agreement;
 
                 var metricValuesAux = [];
                 
@@ -172,7 +172,7 @@ class analytics_chaincode extends Contract {
                     }
 
                     for(let m=0; m<data[l].Record.responses.length; m++){
-                        metricValuesAux.push(data[l].Record.responses[m].responses[0]);
+                        metricValuesAux.push(data[l].Record.responses[m]);
                     }
                 }
 
@@ -190,7 +190,7 @@ class analytics_chaincode extends Contract {
                     metricValues[key] = metricsReduced[key].reduce((a, b) => a + b, 0) / metricsReduced[key].length;
                 }
 
-                var timedScopes = data[0].Record.responses[0].timedScopes
+                var timedScopes = data[0].Record.responses[0].agreement.timedScopes
 
                     let numberResponses = 0;
 
@@ -302,7 +302,7 @@ class analytics_chaincode extends Contract {
         };
 
         let s = await this.queryDataCalculation(ctx, 1);
-        let data2 = JSON.parse(s.toString())[0];
+        let data2 = s[0];
         data2.Record.responses = [guaranteesValues];
         
 
@@ -357,41 +357,22 @@ class analytics_chaincode extends Contract {
     */
     async queryWithQueryString(ctx, queryString) {
     
-        console.log('query String');
-        console.log(JSON.stringify(queryString));
-    
-        let resultsIterator = await ctx.stub.getQueryResult(queryString);
-    
-        let allResults = [];
-    
-        while (true) {
-            let res = await resultsIterator.next();
-    
-            if (res.value && res.value.value.toString()) {
-                let jsonRes = {};
-    
-                console.log(res.value.value.toString('utf8'));
-    
-                jsonRes.Key = res.value.key;
-    
-                try {
-                    jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
-                } catch (err) {
-                    console.log(err);
-                    jsonRes.Record = res.value.value.toString('utf8');
-                }
-    
-                allResults.push(jsonRes);
+        let resultsIterator = ctx.stub.getQueryResult(queryString);
+
+        const allResults = [];
+        for await (const res of resultsIterator) {
+            let jsonRes = {};
+            jsonRes.Key = res.key;
+            try {
+                jsonRes.Record = JSON.parse(res.value.toString('utf8'));
+            } catch (err) {
+                console.log(err);
+                jsonRes.Record = res.value.toString('utf8');
             }
-            if (res.done) {
-                console.log('end of data');
-                await resultsIterator.close();
-                console.info(allResults);
-                console.log(JSON.stringify(allResults));
-                return JSON.stringify(allResults);
-            }
+            allResults.push(jsonRes);
         }
-    
+        
+        return allResults;    
     }
 
 

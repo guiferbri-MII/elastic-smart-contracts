@@ -8,7 +8,7 @@ const diff = require('deep-diff');
 
 let config = {
   conexionPath: "./network/organizations/peerOrganizations/org1.example.com/connection-org1.json",
-  resultsPath: "./experiments_results/103/oti_gc_ansX/",
+  resultsPath: "./experiments/experiments_results/103/oti_gc_ansX/",
   identityName: "admin",
   channelName: "escchannel",
   chaincodeName: "oti_gc_ansX",
