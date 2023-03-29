@@ -1,0 +1,1548 @@
+{
+    "id": "oti_gc_ansX",
+    "version": "1.0.0",
+    "type": "agreement",
+    "context": {
+        "provider": "Everis",
+        "consumer": "CHIE",
+        "validity": {
+            "initial": "2020-09-16",
+            "timeZone": "Europe/Madrid"
+        },
+        "definitions": {
+            "elementsID": [
+                "606691",
+                "606693",
+                "606690",
+                "606692"
+            ],
+            "dashboards": {
+                "oti-gestion-credenciales": {
+                    "default": true,
+                    "overlay": "http://host.docker.internal:5002/api/v1/public/dashboards/oti-gestion-credenciales/overlay.js",
+                    "base": "http://host.docker.internal:5002/api/v1/public/dashboards/oti-gestion-credenciales/base.json",
+                    "modifier": "http://host.docker.internal:5002/api/v1/public/dashboards/oti-gestion-credenciales/modifier.js",
+                    "config": {}
+                }
+            },
+            "schemas": {
+                "porcentajePCAP": {
+                    "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "deadline": {
+                    "description": "Plazo de resolucion de una inicidencia",
+                    "type": "string",
+                    "unit": "hours"
+                },
+                "schedule": {
+                    "description": "Horario del servicio",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Linea de Servicio y Operacion",
+                    "type": "string"
+                }
+            },
+            "scopes": {
+                "SCO": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                }
+            },
+            "logs": {
+                "naos": {
+                    "default": true,
+                    "uri": "http://host.docker.internal:5002/api/v1/logs",
+                    "stateUri": "http://host.docker.internal:5002/api/v1/count",
+                    "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                    "structure": {
+                        "instanceIdColumn": "INCIDENT_ID",
+                        "timestampColumn": "CREATION_DATE",
+                        "actionColumn": "SID"
+                    },
+                    "terminator": "[{\"column\": \"ACTION\",\"values\": [\"SDK_HIST_TRANS_PHASE\"]},{\"column\": \"VALUE\",\"values\": [\"Cierre definitivo\"]}]",
+                    "scopes": {
+                        "SCO": {
+                            "priority": "PRIORITY",
+                            "type": "TYPE"
+                        }
+                    },
+                    "config": {
+                        "refreshRate": 2000,
+                        "bundleSize": 100
+                    }
+                }
+            },
+            "collectors": {
+                "ppinot": {
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                }
+            }
+        }
+    },
+    "terms": {
+        "pricing": {
+            "billing": {
+                "period": "monthly",
+                "initial": "2016-05-12T10:35:36.000",
+                "penalties": [
+                    {
+                        "over": {
+                            "porcentajePCAP": {
+                                "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                "type": "double",
+                                "unit": "%"
+                            }
+                        },
+                        "aggregatedBy": "sum",
+                        "groupBy": {
+                            "serviceLine": {
+                                "name": "LineaServicio",
+                                "description": "Linea de Servicio",
+                                "type": "string",
+                                "default": "Oficina técnica de interoperabilidad"
+                            },
+                            "activity": {
+                                "name": "Actividad",
+                                "description": "Actividad",
+                                "type": "string",
+                                "default": "Gestion de credenciales"
+                            }
+                        },
+                        "upTo": -10
+                    }
+                ]
+            }
+        },
+        "metrics": {
+            "Tiempo_total_peticion": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M01",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Tiempo_hasta_primer_cierre": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M02",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Iteraciones_cierre_temporal": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M03",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Iteraciones_pendiente_usuario": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M04",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Tiempo_dependiente": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M05",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Tiempo_hasta_asignacion_tecnico_oti": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M06",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Tiempo_hasta_entrada_bandeja_oti": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M07",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Iteraciones_reasignacion": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M08",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            },
+            "Iteraciones_dependiente": {
+                "schema": {
+                    "description": "Porcentaje incidencias resueltas en plazo",
+                    "type": "double",
+                    "unit": "%"
+                },
+                "collector": {
+                    "name": "/indicators/M09",
+                    "endpoint": "/api/v6",
+                    "type": "PPINOT-V1",
+                    "infrastructurePath": "internal.collector.ppinot",
+                    "config": {
+                        "measures": "http://host.docker.internal:5002/api/v1/public/static/measures.json",
+                        "schedules": {
+                            "weekdays": "L-VT09:00-18:00/H",
+                            "weekend": "S-ST08:00-14:00/H",
+                            "24x7": "L-DT00:00-23:59/H"
+                        },
+                        "holidays": "http://host.docker.internal:5002/api/v1/public/static/holidays.json"
+                    }
+                },
+                "parameters": {
+                    "deadline": {
+                        "schema": {
+                            "description": "Plazo de resolucion de una inicidencia",
+                            "type": "string",
+                            "unit": "hours"
+                        }
+                    },
+                    "schedule": {
+                        "schema": {
+                            "description": "Horario del servicio",
+                            "type": "string"
+                        }
+                    },
+                    "type": {
+                        "schema": {
+                            "description": "Linea de Servicio y Operacion",
+                            "type": "string"
+                        }
+                    }
+                },
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "metadata": {
+                    "name": "Porcentaje incidencias respondidas en plazo",
+                    "description": "Porcentaje de incidencias respondidas en plazo respecto del total de incidencias comunicadas.",
+                    "kind": "Penalizador",
+                    "class": "Negocio",
+                    "reportable": false
+                }
+            }
+        },
+        "guarantees": [
+            {
+                "id": "Tiempo_total_peticion",
+                "description": "Tiempo transcurrido desde la creación hasta el cierre definitivo de la petición",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Tiempo_total_peticion >= 75.00",
+                        "with": {
+                            "Tiempo_total_peticion": {
+                                "deadline": "<= 204",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Tiempo_total_peticion >= 0 && Tiempo_total_peticion < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Tiempo_hasta_primer_cierre",
+                "description": "Tiempo transcurrido desde la creación hasta el primer cierre temporal",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Tiempo_hasta_primer_cierre >= 75.00",
+                        "with": {
+                            "Tiempo_hasta_primer_cierre": {
+                                "deadline": "<= 112",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Tiempo_hasta_primer_cierre >= 0 && Tiempo_hasta_primer_cierre < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Iteraciones_cierre_temporal",
+                "description": "Recuento de veces que una petición es escalada a cierre temporal",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Iteraciones_cierre_temporal >= 75.00",
+                        "with": {
+                            "Iteraciones_cierre_temporal": {
+                                "deadline": "<= 3",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Iteraciones_cierre_temporal >= 0 && Iteraciones_cierre_temporal < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Iteraciones_pendiente_usuario",
+                "description": "Recuento de veces que una petición es escalada a pendiente de usuario",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Iteraciones_pendiente_usuario >= 75.00",
+                        "with": {
+                            "Iteraciones_pendiente_usuario": {
+                                "deadline": "<= 5",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Iteraciones_pendiente_usuario >= 0 && Iteraciones_pendiente_usuario < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Tiempo_dependiente",
+                "description": "Tiempo total transcurrido durante la tramitación de la petición en el que la petición se ha encontrado en estado dependiente",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Tiempo_dependiente >= 75.00",
+                        "with": {
+                            "Tiempo_dependiente": {
+                                "deadline": "<= 92",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Tiempo_dependiente >= 0 && Tiempo_dependiente < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Tiempo_hasta_asignacion_tecnico_oti",
+                "description": "Tiempo total transcurrido desde la creación de la petición hasta su asignación a un técnico de la OT-I",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Tiempo_hasta_asignacion_tecnico_oti >= 75.00",
+                        "with": {
+                            "Tiempo_hasta_asignacion_tecnico_oti": {
+                                "deadline": "<= 10",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Tiempo_hasta_asignacion_tecnico_oti >= 0 && Tiempo_hasta_asignacion_tecnico_oti < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Tiempo_hasta_entrada_bandeja_oti",
+                "description": "Tiempo total transcurrido desde la creación de la petición hasta su recepción en la bandeja de recepción de la OT-I",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Tiempo_hasta_entrada_bandeja_oti >= 75.00",
+                        "with": {
+                            "Tiempo_hasta_entrada_bandeja_oti": {
+                                "deadline": "<= 10",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Tiempo_hasta_entrada_bandeja_oti >= 0 && Tiempo_hasta_entrada_bandeja_oti < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Iteraciones_reasignacion",
+                "description": "Recuento de veces que una petición es reasignada entre miembros de la OT-I",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Iteraciones_reasignacion >= 75.00",
+                        "with": {
+                            "Iteraciones_reasignacion": {
+                                "deadline": "<= 10",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Iteraciones_reasignacion >= 0 && Iteraciones_reasignacion < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "id": "Iteraciones_dependiente",
+                "description": "Recuento de veces que una petición es escalado a dependiente",
+                "scope": {
+                    "priority": {
+                        "name": "Priority",
+                        "description": "Priority de la incidencia",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "type": {
+                        "name": "Type",
+                        "description": "Type de log",
+                        "type": "string",
+                        "metadata": {
+                            "reported": true
+                        }
+                    },
+                    "serviceLine": {
+                        "name": "LineaServicio",
+                        "description": "Linea de Servicio",
+                        "type": "string",
+                        "default": "Oficina técnica de interoperabilidad"
+                    },
+                    "activity": {
+                        "name": "Actividad",
+                        "description": "Actividad",
+                        "type": "string",
+                        "default": "Gestion de credenciales"
+                    }
+                },
+                "of": [
+                    {
+                        "scope": {
+                            "priority": "P1",
+                            "type": "*"
+                        },
+                        "objective": "Iteraciones_dependiente >= 75.00",
+                        "with": {
+                            "Iteraciones_dependiente": {
+                                "deadline": "<= 5",
+                                "schedule": "L-VT09:00-18:00/H",
+                                "scheduleweekend": "S-ST08:00-14:00/H",
+                                "stype": "Gestión de Activos Software y Soportes Corporativos - Oracle - Formular consulta técnica"
+                            }
+                        },
+                        "window": {
+                            "type": "static",
+                            "period": "monthly",
+                            "initial": "2012-01-16"
+                        },
+                        "evidences": [],
+                        "penalties": [
+                            {
+                                "over": {
+                                    "porcentajePCAP": {
+                                        "description": "Porcentaje de penalizacion sobre la facturacion mensual SCO",
+                                        "type": "double",
+                                        "unit": "%"
+                                    }
+                                },
+                                "of": [
+                                    {
+                                        "value": "-1",
+                                        "condition": "Iteraciones_dependiente >= 0 && Iteraciones_dependiente < 90.00"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "__v": 0
+}
