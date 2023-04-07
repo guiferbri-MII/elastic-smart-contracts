@@ -1,71 +1,124 @@
 # Setup
+In this guide we will install the project's software requirements and prepare the project to execute experiments using elastic smart contracts.
 
 ## Requirements
-This guide has been developed in Ubuntu 18.04. It is recommended to update the system packages before starting the installation procedure (with: ```sudo apt update```)
+Software requirements:
+- git
+- cURL
+- Docker
+- Go
+- Npm + Node
+- Python
+- Hyperledger binaries
+
+### git
+[Installing Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+
+If you are running on MacOS execute:
+```
+brew install git
+```
+
+### cURL
+[Download cURL](https://curl.haxx.se/download.html)
+
+If you are running on MacOS execute:
+```
+brew install curl
+```
+
+### Docker
+[Download Docker](https://www.docker.com/get-started/)
+
+If you are running on MacOS execute:
+```
+brew install --cask docker
+```
+### Go
+[Download Go](https://go.dev/dl/)
+
+If you are running on MacOS execute:
+```
+brew install go
+```
+
+### Nvm + Node
+Install nvm to manage node versions [Download nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+To execute the project is necessary to use node version v16.19.1. Once nvm is installed, or if you have installed previously, execute:
+```
+nvm install 16.19.1
+```
+
+If you are using a different node version managed with nvm, execute `nvm use 16.19.1` to use the version.
+
+### Python
+[Download Python 2.7](https://www.python.org/downloads/)
+
+You can use pyenv to manage python versions [Download pyenv](https://github.com/pyenv/pyenv)
+
+Install matplotlib in order to display experiments results in as graphics
+```
+python -m pip install matplotlib 
+```
+
+### Hyperledger binaries
+##### Option 1
+Download the Binaries and Docker images with the following command line
+```
+curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.4.0 1.4.9
+```
+##### Option 2
+Or get the install script `install-fabric.sh`
+
+```
+curl -sSLO https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh && chmod +x install-fabric.sh
+```
+
+Run the script with the next options to download the Fabric binaries. Use thes options *--fabric-version* and *-ca-version* to indicate the necessary versions.
+
+```
+./install-fabric.sh --fabric-version 2.4.0 -ca-version 1.4.9 binary
+```
+*For more information please check https://hyperledger-fabric.readthedocs.io/en/release-2.5/install.html*
 
 ## Steps
-1. Install Git if you don not have it already:
+Once you have [installed all required](#requirements) softaware:
 
-2. Download and install cURL: https://curl.haxx.se/download.html
-
-    2.1 If you are running on mac, install wget:
-  ```
-  brew install wget
-  ```
-3. Install docker and docker-compose, 17.06.2-ce or greater is required for docker and 1.14.0 or greater for docker-compose:
-  ```
-  sudo apt install docker.io
-  sudo apt install docker-compose
-  sudo apt update
-  ```
-  
-   3.1 Make sure Docker is up and running.
-   
-4. Install Go 1.13 or greater, in order to do so you need to run:
-  ```
-  sudo add-apt-repository ppa:longsleep/golang-backports
-  sudo apt update
-  sudo apt install golang-go
-  ``` 
-  4.1 Set the following environment variables:
-  ```
-  export GOPATH=$HOME/go
-  export PATH=$PATH:$GOPATH/bin
-  ``` 
-5. Install Node and Npm, Node version 8 is supported from 8.9.4 and higher. Node version 10 is supported from 10.15.3 and higher. It is highly recommended to use NVM to manage node versions, check the installation at https://github.com/nvm-sh/nvm#installing-and-updating as the commands may vary with the version. This guide uses Node 12.18.1 and NPM 6.14.5
-
-6. Make sure you have Python 2.7, if not, run:
-  ```
-  sudo apt-get install python
-  python --version
-  ```
-  
-7. Download the Binaries and Docker images with the following command line: 
-```
-curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.3.1 1.4.9
-```
-**This will also download the fabric samples as there is no installer available for just the Binaries and Images, for more information please check https://hyperledger-fabric.readthedocs.io/en/release-2.3/install.html**
-
-8. Clone the repository https://github.com/isa-group/elastic-smart-contracts into the desired directory
-
-    -8.1 Now you need to set the path to the binaries downloaded previosly (the **bin** folder), you can either run:
+1. Create the working directory, e.g., *ESC*
     ```
-    export PATH=<path to bin>:$PATH
+    mkdir ESC
     ```
-    and comment comment line 9 of elastic-smart-contracts/network/init.sh which is:
+1. Clone the repository [galibo-infraestructure](https://github.com/governify/galibo-infrastructure) into the working directory and go to *develop* branch
+1. Run docker-compose using the file *docker-compose-local.yaml*
     ```
-    export PATH=${PWD}/../bin:$PATH
+    docker-compose -f ./docker-galibo/docker-compose-local.yaml --env-file .env up -d
     ```
-    or leave that line uncommented and place the bin folder in elastic-smart-contracts/bin, this line will cause the scripts to always point to the binaries placed at elastic-smart-contracts, regardless of being in a new terminal. This is the recommended setup.
-    
-    (bin is already in the .gitignore file but you should be careful not to upload the commented line of init.sh if you commented it)
-
-9. Run the following command for each folder in **elastic-smart-contracts/esc/*** , **elastic-smart-contracts/esc/*/chaincode** , **elastic-smart-contracts/esc_core/** and **elastic-smart-contracts/network/connection**:
-
-```
-npm install
-```
-
-## Troubleshooting
-- Do not run `npm install` in **elastic-smart-contracts/esc/**, in case you already did it, delete the file **package-lock.json**
-- Make sure you have Node 12.18.1 installed in order to avoid problems with older versions.
+1. Stop registry container
+1. Clone the repository [registry](https://github.com/governify/registry) into the working directory
+1. Go to `registry/infrastructure.yaml` and update the URL for registry from *'http://localhost:5400'* to ***'http://host.docker.internal:5400'***
+1. Install dependencies and start **registry**
+    ```
+    npm install
+    node index.js
+    ```
+1. Add *oti_gc_ansX* agreement to registry. Make a POST request with the agreement information. You can use the json file *[otig_gc_ansX.json](./docs/otig_gc_ansX.json)*
+    ```
+    curl --location 'http://localhost:5400/api/v6/agreements/' --header 'Content-Type: application/json' --data @otig_gc_ansX.json
+    ```
+1. Clone the repository [elastic-smart-contracts](https://github.com/isa-group/elastic-smart-contracts) into the working directory
+1. Copy the *bin* folder downloaded [previously](#hyperledger-binaries) in *elastic-smart-contracts/bin*
+1. Go to `elastic-smart-contracts/infrastructure.yaml` and update the URL for registry from *'http://localhost:5400'* to ***'http://host.docker.internal:5400'***
+1. Install dependencies in the root folder
+    ```
+    npm install
+    npm install express governify-commons oas-tools@2.1.4
+    ```
+1. Go to *network/connection* folder and install dependencies
+    ```
+    npm install
+    ```
+1. Go to root folder and start **elastic-smart-contracts**
+    ```
+    node index.js
+    ```
