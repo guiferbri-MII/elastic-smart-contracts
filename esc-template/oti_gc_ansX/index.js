@@ -25,15 +25,14 @@ let config = {
   frequencyControlCalculate: 1,
   maximumTimeAnalysis: 3.2,
   minimumTimeAnalysis: 3,
-  elasticityMode: "noElasticity",
+  elasticityMode: "timeWindow",
   experimentName: "test",
   coldStart: false,
-  numberOfESCs: 16,
+  numberOfESCs: 2,
   dataPerHarvest: 10,
   analysisRetryTime: 500,
   numberOfTimesForAnalysisAvg: 5,
 
-    
   updateDataContract: "updateData",
   evaluateWindowTimeContract: "evaluateHistory",
   evaluateHarvestFrequencyContract: "evaluateFrequency",
@@ -42,8 +41,6 @@ let config = {
   analysisContract: "analysis",
   dataStorageContract: "createData",
   calculationStorageContract: "createDataCalculation",
-
-
 
 }
 
@@ -154,7 +151,6 @@ async function hookData(metricQueries, agreement){
     let totalCollectorRequestTime = Date.now() - initCollectorRequestTime;
     let timedScopes = [];
     let metricValues = [];
-
     compositeResponse.forEach(function (metricValue) {
       const ts = {
         scope: metricValue.scope,
@@ -169,6 +165,12 @@ async function hookData(metricQueries, agreement){
       } else {
         logger.debug('TimedScope already exists in array index: ', tsIndex);
       }
+
+      let totalValueEvidences = 0;
+      for (let evIndex = 0; evIndex < metricValue.evidences.length; evIndex++) {
+        totalValueEvidences += parseInt(metricValue.evidences[evIndex].value);
+      }
+      metricValue.value = (totalValueEvidences / metricValue.evidences.length).toString();
 
       // If array metricValues has no values for the index yet, we initialize it
       if (metricValues[tsIndex] == null) {
@@ -338,7 +340,7 @@ function start(metricQueries, agreement){
         //First time we collect data to introduce it in the blockchain before first analysis is done
   
         setTimeout(() => {
-          console.log("HARVEST STARTED")
+          console.log("HARVEST STARTED");
           intervalHarvester(config.harvestFrequency, metricQueries, agreement);
         } , config.harvestStartDelay*1000);
 

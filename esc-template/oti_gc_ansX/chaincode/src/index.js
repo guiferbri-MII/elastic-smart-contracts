@@ -172,14 +172,14 @@ class analytics_chaincode extends Contract {
                     }
 
                     for(let m=0; m<data[l].Record.responses.length; m++){
-                        metricValuesAux.push(data[l].Record.responses[m]);
+                        metricValuesAux.push(data[l].Record.responses[m].responses[0]);
                     }
                 }
-
+                
                 let metricsReduced = metricValuesAux.reduce((acc, curr) => {
                     Object.entries(curr).forEach(([key, value]) => {
                         acc[key] = acc[key] || [];
-                        acc[key].push(parseInt(value.value));
+                        acc[key].push(parseInt(value.value));          
                     });
                     return acc;
                 } , {});
@@ -189,8 +189,8 @@ class analytics_chaincode extends Contract {
                 for (let key in metricsReduced) {
                     metricValues[key] = metricsReduced[key].reduce((a, b) => a + b, 0) / metricsReduced[key].length;
                 }
-
-                var timedScopes = data[0].Record.responses[0].agreement.timedScopes
+                
+                var timedScopes = data[0].Record.responses[0].timedScopes
 
                     let numberResponses = 0;
 
