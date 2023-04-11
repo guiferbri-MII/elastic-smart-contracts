@@ -1,14 +1,11 @@
 import sys, getopt, os
-import csv
+import csv, operator, copy
 from datetime import datetime
+from io import BytesIO
+import base64, re, shutil
 import matplotlib  
 matplotlib.use('TkAgg')   
 import matplotlib.pyplot as plt 
-
-import base64
-from io import BytesIO
-import re
-import shutil
 
 def printResults(folderName):
     with open(inputFile, "r") as file:
@@ -52,24 +49,35 @@ def printResults(folderName):
     with open('test.html','w') as f:
         f.write(html)
 
+# -------------------------------
+# Read file
+# @inputFile: path file to read
+# Return:
+# - file headers list
+# - file data grouped by the header
+# -------------------------------
 def readFile(inputFile):
     headers = []
     data = {}
     with open(inputFile, "r") as file:
         csv_reader = csv.reader(file)
         headers = next(csv_reader)
-        
-        #print('HEADERS')
-        #print(headers)
-        #print(len(headers))
+
         for title in headers:
             data[title] = []
         for row in csv_reader:
             for i, title in enumerate(headers):
                 data[title].append(row[i])
-        #print(data)
+    
     return headers, data
 
+# -------------------------------
+# Read file
+# @folderName: folder where is the result file csv
+# @experimentNumber: number of the experiment to get results
+# Return:
+# - agreement dictionary. key: agreementId, value: header and data from the result file
+# -------------------------------
 def getResultsByAgreement(folderName, experimentNumber):
     agreements = {}
     excludes = '|'.join(['.DS_Store', '\w*_havest.csv','\w*joined.csv'])
@@ -77,10 +85,8 @@ def getResultsByAgreement(folderName, experimentNumber):
         dirs[:] = [d for d in dirs if not re.match(excludes, d)]
         files = [f for f in files if not re.match(excludes, f)]
         for file in files:
-            #print(root)
-            #print(file)
+            # TODO: filter files by the excludes list
             if "_harvest" not in file and "_joined" not in file and "html" not in file:
-                #print(file)
                 agreementId = root.split('/')[-1:][0]
                 
                 pathFile = os.path.join(root, file)
@@ -89,17 +95,23 @@ def getResultsByAgreement(folderName, experimentNumber):
                     'headerFile' : headers,
                     'dataFile' : data
                 }
-    #print(agreements)
+
     return agreements
 
+# -------------------------------
+# Read file
+# @agreements: agreement dictionary
+# Return:
+# - Total number of ESC
+# - All agreements joined in dictionary sorted by INIT_EXEC_TIME: 
+#    key: timeStamp (INIT_EXEC_TIME), 
+#    value: list with data for each agreement: escNumber, agreementId. totalTime, analysisTime, timeData, frequencyData
+# -------------------------------
 def joinResults(agreements):
-    #print(agreements)
     totalESC = len(agreements)
-    #print(totalESC)
     result = {}
     for agreementId in agreements:
         escNumber = agreementId.split('oti_gc_ans')[1]
-        #print(escNumber)
         dataFile = agreements[agreementId]['dataFile']
         for i in range(len(dataFile['INIT_EXEC_TIME'])):
             timeStamp = dataFile['INIT_EXEC_TIME'][i]
@@ -116,16 +128,26 @@ def joinResults(agreements):
             }
             currentTimestamp.append(newData)
             result[timeStamp] = currentTimestamp
-    #print(result)
-    return totalESC, result
 
+    keys = list(result.keys())
+    keys.sort()
+    sorted_result = {i: result[i] for i in keys}
+    return totalESC, sorted_result
+
+# -------------------------------
+# Read file
+# @totalNumberESC: Total number of ESC
+# @agreementsJoined: All agreements joined in dictionary sorted by INIT_EXEC_TIME
+# @savePath: Path where save the new file with joined agreements
+# Return:
+# - Full path of the new file created
+# -------------------------------
 def generateCSVJoined(totalNumberESC, agreementsJoined, savePath):
     header = ['TIMESTAMP']
     for i in range(totalNumberESC):
         escHeader = 'ESC_{0}_TotalTime,ESC_{0}_AnalysisTime,ESC_{0}_TimeData,ESC_{0}_FrequencyData'.format(i+1)
         header.extend(escHeader.split(','))
-    #print('Header joined')
-    #print(header)
+
     now = datetime.now()
     now_str = now.strftime("%Y-%m-%dT%H-%M-%S")
     fileResultPath = savePath+now_str+'_joined.csv'
@@ -162,6 +184,13 @@ def generateCSVJoined(totalNumberESC, agreementsJoined, savePath):
             writer.writerow(row)
     return fileResultPath
 
+# -------------------------------
+# Read file
+# @agreementId: ESC Id
+# @agreement: Agreement data
+# Return:
+# - Graphic image encoded in base64
+# -------------------------------
 def generateAgreementGraphic(agreementId, agreement):
     data = agreement['dataFile']
     for i in range(len(data["INIT_EXEC_TIME"])):
@@ -170,58 +199,87 @@ def generateAgreementGraphic(agreementId, agreement):
     for i in range(len(data["TOTAL_TIME"])):
         data["TOTAL_TIME"][i] = float(data["TOTAL_TIME"][i])
 
-    '''fig, ax = plt.subplots()
-    ax.plot(data["INIT_EXEC_TIME"], data["TOTAL_TIME"])
-    fig.autofmt_xdate()
-    #plt.savefig(outputFile)
-    plt.show()'''
-    #fig = plt.figure()
     fig, ax = plt.subplots()
-    ax.plot(data["INIT_EXEC_TIME"], data["TOTAL_TIME"])
+    ax.plot(data["INIT_EXEC_TIME"], data["TOTAL_TIME"], label="Analysis time (s)")
+    ax.legend(loc="upper right")
     ax.title.set_text(agreementId)
     fig.autofmt_xdate()
-    #plot sth
 
     tmpfile = BytesIO()
     fig.savefig(tmpfile, format='png')
     encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
     return encoded
 
-def addAgreementGraphics(agreementsBase64Code, file):
-    elements = []
-    for agreementId in agreementsBase64Code:
-        base64graphic = agreementsBase64Code[agreementId]
-        graphicElement = "<div class=\"col-4\"><img class=\"img-fluid\" src=\"data:image/png;base64,{0}\"></div><!--AgreementsChart-->".format(base64graphic)
-        #graphicElement = "<div class=\"col {0}\">".format(agreementId,base64graphic)
-        elements.append(graphicElement)
+# -------------------------------
+# Read file
+# @numberESC: List with all base64 graphic images
+# @keyGraphic: Element to measure in the axis y
+# @dataJoined: Data from the joined agreements
+# Return:
+# - Graphic image encoded in base64
+# -------------------------------
+def generateRegressionGraphic(numberESC, keyGraphic, dataJoined):
+    availableMarkers = ['s','*','^','o','v','<','>','p','h','P','+','H','D','X','d','.']
+    data = copy.deepcopy(dataJoined)
+    for i in range(len(data["TIMESTAMP"])):
+        currentTimestamp = datetime.fromtimestamp(int(data["TIMESTAMP"][i])/1000)
+        data["TIMESTAMP"][i] = currentTimestamp.strftime("%H:%M:%S")
     
+    fig, ax = plt.subplots()    
+    availableKeys = {}
+    for key in data:
+        if keyGraphic.replace(" ", "") in key:
+            for i in range(len(data[key])):
+                if data[key][i]:
+                    data[key][i] = float(data[key][i])
+                else:
+                    data[key][i] = None
+            availableKeys[key] = keyGraphic
+    counter = 0
+    for avKey in availableKeys:
+        labelAux = avKey.split('_')
+        label = ' '.join(labelAux[:2])
+        marker = availableMarkers[counter]
+        ax.scatter(data["TIMESTAMP"], data[avKey], marker = marker, label="{}(s)".format(label))
+        ax.legend(loc="upper right")
+        ax.plot(data["TIMESTAMP"], data[avKey])
+        ax.title.set_text(availableKeys[avKey])
+        counter = 0 if numberESC-1 == counter else counter + 1
+
+    fig.autofmt_xdate()
+
+    tmpfile = BytesIO()
+    fig.savefig(tmpfile, format='png')
+    encoded = base64.b64encode(tmpfile.getvalue()).decode('utf-8')
+
+    return encoded
+
+# -------------------------------
+# Read file
+# @base64CodeLista: List with all base64 graphic images
+# @file: File where to add graphics
+# @replaceType: agreements | regression
+# -------------------------------
+def addGraphics(base64CodeList, file, replaceType):
+    if replaceType == 'agreements':
+        toReplace = '<!--AgreementsChart-->'
+        classDiv = 'col-4'
+    elif replaceType == 'regression':
+        toReplace = '<!--JoinedChart-->'
+        classDiv = 'col-6'
+    
+    elements = []
+    for key in base64CodeList:
+        base64graphic = base64CodeList[key]
+        graphicElement = "<div class=\"{1}\"><img class=\"img-fluid\" src=\"data:image/png;base64,{0}\"></div>{2}".format(base64graphic,classDiv,toReplace)
+        elements.append(graphicElement)
+    newData = '<br/>'.join(elements)
+
     readFile = open(file, "r")
     data = readFile.read()
-    data = data.replace('<!--AgreementsChart-->', '<br/>'.join(elements))
+    data = data.replace(toReplace, newData)
     writeFile = open(file, "w")
     writeFile.write(data)
-
-    '''for agreementId in agreementsBase64Code:
-        base64graphic = agreementsBase64Code[agreementId]
-        with open(file,'rw') as f:
-            for line in f:
-                graphicElement = "<div class=\"col\"><img src=\"data:image/png;base64,{1}\"></div><!--AgreementsChart-->".format(agreementId,base64graphic)
-                f.write(line.replace('<!--AgreementsChart-->', graphicElement))
-                f.close()'''
-    
-    
-    '''
-    #html = 'Some html head' + '<img src=\'data:image/png;base64,{}\'>'.format(encoded) + 'Some more html'
-    #input file
-    fin = open(file, "rt")
-    #output file to write the result to
-    fout = open(file, "w")
-    #with open(file,'w') as f:
-    for line in fin:
-        #read replace the string and write to output file
-        graphicElement = "<div class=\"col {0}\"><img src=\"data:image/png;base64,{1}\"></div><!--AgreementsChart-->".format(agreementId,base64graphic)
-        fout.write(line.replace('<!--AgreementsChart-->', graphicElement))
-        #f.write(html)'''
 
 
 def main(argv):
@@ -244,24 +302,26 @@ def main(argv):
     # Create csv file with joined agreements
     joinedFilePath = generateCSVJoined(totalNumberESC, agreementsJoined, pathFolder)
     print('Agreements results joined in: {}'.format(joinedFilePath))
-
+    # Copy template for graphics
     graphicPath = pathFolder + 'graphicResult.html'
     shutil.copyfile('graphicResultTemplate.html', graphicPath)
-
+    # Generate graphics in base64 for individual agreements
     agreementGraphic = {}
     for agreementId in agreements:
         base64graphic = generateAgreementGraphic(agreementId, agreements[agreementId])
         agreementGraphic[agreementId] = base64graphic
-    addAgreementGraphics(agreementGraphic,graphicPath)
-
-
-    '''fig, ax = plt.subplots()
-    testX = ['A', 'B', 'C', 'A', 'D']
-    testY = [30, 20, 50, 100,10]
-    ax.plot(testX, testY)
-    fig.autofmt_xdate()
-    #plt.savefig(outputFile)
-    plt.show()'''
+    # Add graphics to copied template
+    addGraphics(agreementGraphic,graphicPath,'agreements')
+    # Generate graphics in base64 for joined agreements
+    regressionGraphics = {}
+    headersJoined, dataJoined = readFile(joinedFilePath)
+    keyGraphics = ['Total Time','Analysis Time', 'Time Data', 'Frequency Data']
+    for key in keyGraphics:
+        base64graphicRegression = generateRegressionGraphic(totalNumberESC, key, dataJoined)
+        regressionGraphics[key] = base64graphicRegression
+    # Add graphics to copied template
+    addGraphics(regressionGraphics,graphicPath,'regression')
+    print('You can view the graphic results in: {}'.format(graphicPath))
 
 if __name__ == "__main__":
    main(sys.argv[1:])
