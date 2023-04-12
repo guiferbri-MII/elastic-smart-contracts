@@ -151,10 +151,13 @@ def generateCSVJoined(totalNumberESC, agreementsJoined, savePath):
     now = datetime.now()
     now_str = now.strftime("%Y-%m-%dT%H-%M-%S")
     fileResultPath = savePath+now_str+'_joined.csv'
+
+    keys = list(agreementsJoined.keys())
+    keys.sort()
     with open(fileResultPath, 'w') as f:
         writer = csv.writer(f)
         writer.writerow(header)
-        for timeStamp in agreementsJoined:
+        for timeStamp in keys:
             row = []
             dataTS = agreementsJoined[timeStamp]
             if totalNumberESC == len(dataTS):
@@ -191,7 +194,8 @@ def generateCSVJoined(totalNumberESC, agreementsJoined, savePath):
 # Return:
 # - Graphic image encoded in base64
 # -------------------------------
-def generateAgreementGraphic(agreementId, agreement):
+def generateAgreementGraphic(agreementId, agreementObj):
+    agreement = copy.deepcopy(agreementObj)
     data = agreement['dataFile']
     for i in range(len(data["INIT_EXEC_TIME"])):
         currentTimestamp = datetime.fromtimestamp(int(data["INIT_EXEC_TIME"][i])/1000)
@@ -218,34 +222,28 @@ def generateAgreementGraphic(agreementId, agreement):
 # Return:
 # - Graphic image encoded in base64
 # -------------------------------
-def generateRegressionGraphic(numberESC, keyGraphic, dataJoined):
+def generateComparativeGraphic(numberESC, agreementsList, keyGraphic):
+    agreements = copy.deepcopy(agreementsList)
+    keyGraphicAux = keyGraphic.replace(' ', '_').upper()
     availableMarkers = ['s','*','^','o','v','<','>','p','h','P','+','H','D','X','d','.']
-    data = copy.deepcopy(dataJoined)
-    for i in range(len(data["TIMESTAMP"])):
-        currentTimestamp = datetime.fromtimestamp(int(data["TIMESTAMP"][i])/1000)
-        data["TIMESTAMP"][i] = currentTimestamp.strftime("%H:%M:%S")
-    
-    fig, ax = plt.subplots()    
-    availableKeys = {}
-    for key in data:
-        if keyGraphic.replace(" ", "") in key:
-            for i in range(len(data[key])):
-                if data[key][i]:
-                    data[key][i] = float(data[key][i])
-                else:
-                    data[key][i] = None
-            availableKeys[key] = keyGraphic
+    fig, ax = plt.subplots()
     counter = 0
-    for avKey in availableKeys:
-        labelAux = avKey.split('_')
-        label = ' '.join(labelAux[:2])
-        marker = availableMarkers[counter]
-        ax.scatter(data["TIMESTAMP"], data[avKey], marker = marker, label="{}(s)".format(label))
-        ax.legend(loc="upper right")
-        ax.plot(data["TIMESTAMP"], data[avKey])
-        ax.title.set_text(availableKeys[avKey])
-        counter = 0 if numberESC-1 == counter else counter + 1
+    for agreementId in agreements:
+        data = agreements[agreementId]['dataFile']
+        for i in range(len(data["INIT_EXEC_TIME"])):
+            currentTimestamp = datetime.fromtimestamp(int(data["INIT_EXEC_TIME"][i])/1000)
+            data["INIT_EXEC_TIME"][i] = currentTimestamp.strftime("%H:%M:%S")
+        for i in range(len(data[keyGraphicAux])):
+            data[keyGraphicAux][i] = float(data[keyGraphicAux][i])
 
+        marker = availableMarkers[counter]
+        ax.scatter(data["INIT_EXEC_TIME"], data[keyGraphicAux], marker = marker, label=agreementId)
+        ax.plot(data["INIT_EXEC_TIME"], data[keyGraphicAux])
+        # Update counter for new marker
+        counter = 0 if numberESC-1 == counter else counter + 1
+    
+    ax.legend(loc="upper right")
+    ax.title.set_text("{} (s)".format(keyGraphic))
     fig.autofmt_xdate()
 
     tmpfile = BytesIO()
@@ -258,13 +256,13 @@ def generateRegressionGraphic(numberESC, keyGraphic, dataJoined):
 # Read file
 # @base64CodeLista: List with all base64 graphic images
 # @file: File where to add graphics
-# @replaceType: agreements | regression
+# @replaceType: agreements | comparative
 # -------------------------------
 def addGraphics(base64CodeList, file, replaceType):
     if replaceType == 'agreements':
         toReplace = '<!--AgreementsChart-->'
         classDiv = 'col-4'
-    elif replaceType == 'regression':
+    elif replaceType == 'comparative':
         toReplace = '<!--JoinedChart-->'
         classDiv = 'col-6'
     
@@ -313,14 +311,15 @@ def main(argv):
     # Add graphics to copied template
     addGraphics(agreementGraphic,graphicPath,'agreements')
     # Generate graphics in base64 for joined agreements
-    regressionGraphics = {}
+    comparativeGraphics = {}
     headersJoined, dataJoined = readFile(joinedFilePath)
-    keyGraphics = ['Total Time','Analysis Time', 'Time Data', 'Frequency Data']
+    #keyGraphics = ['Total Time','Analysis Time', 'Time Data', 'Frequency Data']
+    keyGraphics = ['Total Time','Analysis Time', 'Time Data']
     for key in keyGraphics:
-        base64graphicRegression = generateRegressionGraphic(totalNumberESC, key, dataJoined)
-        regressionGraphics[key] = base64graphicRegression
+        base64graphicComparative = generateComparativeGraphic(totalNumberESC, agreements, key)
+        comparativeGraphics[key] = base64graphicComparative
     # Add graphics to copied template
-    addGraphics(regressionGraphics,graphicPath,'regression')
+    addGraphics(comparativeGraphics,graphicPath,'comparative')
     print('You can view the graphic results in: {}'.format(graphicPath))
 
 if __name__ == "__main__":
