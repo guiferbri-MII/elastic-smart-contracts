@@ -111,7 +111,7 @@ def joinResults(agreements):
     totalESC = len(agreements)
     result = {}
     for agreementId in agreements:
-        escNumber = agreementId.split('oti_gc_ans')[1]
+        escNumber = agreementId.split(agreementName)[1]
         dataFile = agreements[agreementId]['dataFile']
         for i in range(len(dataFile['INIT_EXEC_TIME'])):
             timeStamp = dataFile['INIT_EXEC_TIME'][i]
@@ -202,9 +202,26 @@ def generateAgreementGraphic(agreementId, agreementObj):
         data["INIT_EXEC_TIME"][i] = currentTimestamp.strftime("%H:%M:%S")
     for i in range(len(data["TOTAL_TIME"])):
         data["TOTAL_TIME"][i] = float(data["TOTAL_TIME"][i])
+    for i in range(len(data["FREQUENCY_DATA"])):
+        data["FREQUENCY_DATA"][i] = float(data["FREQUENCY_DATA"][i])
+    for i in range(len(data["MINIMUM_TIME"])):
+        data["MINIMUM_TIME"][i] = float(data["MINIMUM_TIME"][i])
+    for i in range(len(data["FREQUENCY_DATA"])):
+        data["MAXIMUM_TIME"][i] = float(data["MAXIMUM_TIME"][i])
 
     fig, ax = plt.subplots()
-    ax.plot(data["INIT_EXEC_TIME"], data["TOTAL_TIME"], label="Analysis time (s)")
+    ax.bar(data["ID"], data["TOTAL_TIME"], align='center', label="Total time (s)", width=0.4, color='green')
+    ax.plot(data["ID"], data["MINIMUM_TIME"], label="Min time (s)")
+    ax.plot(data["ID"], data["MAXIMUM_TIME"], label="Max time (s)")
+    ax.set_ylabel('Times (s)')
+    ax.set_xlabel('Analysis Id') 
+
+    ax2 = ax.twinx()
+    color = 'red'
+    g4 = ax2.plot(data["ID"], data["FREQUENCY_DATA"], label="Frequency (s)", color=color)
+    ax2.set_ylabel('Frequency (s)', color=color)
+    ax2.tick_params(axis='y')
+
     ax.legend(loc="upper right")
     ax.title.set_text(agreementId)
     fig.autofmt_xdate()
@@ -282,16 +299,19 @@ def addGraphics(base64CodeList, file, replaceType):
 
 def main(argv):
     inputfolder = ''
-    experimentNumber = ''
-    opts, args = getopt.getopt(argv,"h:e:",["expnum="])
+    global experimentNumber
+    global agreementName
+    opts, args = getopt.getopt(argv,"h:e:a:",["expnum=","agreement="])
     for opt, arg in opts:
         if opt == '-h':
             print ('printResults.py -e <experiment number>')
             sys.exit()
         elif opt in ("-e", "--expnum"):
             experimentNumber = arg
+        elif opt in ("-a", "--agreement"):
+            agreementName = arg
     pathFolder = "experiments/experiments_results/{0}/".format(experimentNumber)
-    print('Experiment number: {0}\nPath folder: {1}'.format(experimentNumber, pathFolder))
+    print('Experiment number: {0}\nAgreement: {2}\nPath folder: {1}'.format(experimentNumber, pathFolder, agreementName))
 
     # Dictionary. Key: agreement id; Value: {dataFile, headerFile}
     agreements = getResultsByAgreement(pathFolder, experimentNumber)
